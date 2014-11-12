@@ -1,5 +1,6 @@
 #!/bin/bash
-# RHEL-compatible init.d script for beanstalkd, and simple, fast work queue.
+# description: beanstalkd - a simple, fast work queue
+# chkconfig: 35 99 01
 #
 # beanstalkd is run as nobody, binds to localhost, and records a binlog in
 # /opt/beanstalk.
