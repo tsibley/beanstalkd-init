@@ -1,0 +1,44 @@
+#!/bin/bash
+# RHEL-compatible init.d script for beanstalkd, and simple, fast work queue.
+#
+# beanstalkd is run as nobody, binds to localhost, and records a binlog in
+# /opt/beanstalk.
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+BASE=/opt/beanstalk
+BEANSTALKD=/usr/local/bin/beanstalkd
+USER=nobody
+
+INITLOCK=/var/lock/subsys/beanstalkd
+
+start() {
+    echo -n "Starting beanstalkd: "
+    daemon --user $USER --check beanstalkd "$BEANSTALKD -b $BASE -l localhost >>$BASE/server.log 2>&1 &"
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $INITLOCK
+    /usr/sbin/lsof -Fp $BASE/lock | cut -c 2- > /var/run/beanstalkd.pid
+    return $RETVAL
+}
+
+stop() {
+    echo -n "Shutting down beanstalkd: "
+    killproc -p /var/run/beanstalkd.pid beanstalkd
+    RETVAL=$?
+    [ $RETVAL -eq 0 ] && rm -f $INITLOCK /var/run/beanstalkd.pid
+    echo
+    return $RETVAL
+}
+
+case "$1" in
+             start) start ;;
+              stop) stop  ;;
+            status) status beanstalkd ;;
+    restart|reload) stop; start ;;
+       condrestart) [ -f $INITLOCK ] && restart || : ;;
+                 *) echo "Usage: beanstalkd {start|stop|status|reload|restart}"; exit 1 ;;
+esac
+exit $?
