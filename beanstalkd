@@ -3,21 +3,31 @@
 # chkconfig: 35 99 01
 #
 # beanstalkd is run as nobody, binds to localhost, and records a binlog in
-# /opt/beanstalk.
+# /opt/beanstalk (BASE).  Stdout/stderr are recorded in /opt/beanstalk/server.log.
+#
+# You may configure the BEANSTALKD, BASE, USER, and HOST variables by setting
+# them in /etc/sysconfig/beanstalkd.  If HOST is set to the empty string,
+# beanstalkd will by default listen on all addresses.
 #
 
 # Source function library.
 . /etc/init.d/functions
 
-BASE=/opt/beanstalk
 BEANSTALKD=/usr/local/bin/beanstalkd
+BASE=/opt/beanstalk
 USER=nobody
+HOST=localhost
 
 INITLOCK=/var/lock/subsys/beanstalkd
 
+# Configuration
+[ -e /etc/sysconfig/beanstalkd ] && . /etc/sysconfig/beanstalkd
+
+[ -n "$HOST" ] && LISTEN="-l $HOST"
+
 start() {
     echo -n "Starting beanstalkd: "
-    daemon --user $USER --check beanstalkd "$BEANSTALKD -b $BASE -l localhost >>$BASE/server.log 2>&1 &"
+    daemon --user $USER --check beanstalkd "$BEANSTALKD -b $BASE $LISTEN >>$BASE/server.log 2>&1 &"
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch $INITLOCK
