@@ -30,8 +30,13 @@ start() {
     daemon --user $USER --check beanstalkd "$BEANSTALKD -b $BASE $LISTEN >>$BASE/server.log 2>&1 &"
     RETVAL=$?
     echo
-    [ $RETVAL -eq 0 ] && touch $INITLOCK
-    /usr/sbin/lsof -Fp $BASE/lock | cut -c 2- > /var/run/beanstalkd.pid
+    if [ $RETVAL -eq 0 ]; then
+        touch $INITLOCK
+        sleep 1
+        if [ -e $BASE/lock ]; then
+            /usr/sbin/lsof -Fp $BASE/lock | cut -c 2- > /var/run/beanstalkd.pid
+        fi
+    fi
     return $RETVAL
 }
 
